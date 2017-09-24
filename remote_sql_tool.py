@@ -9,6 +9,7 @@
 
 from tkinter import ttk
 import tkinter 
+from tkinter.filedialog import asksaveasfile
 import urllib.request
 import mysql.connector
 
@@ -17,6 +18,7 @@ ALL = 'news'
 class Application:
     def __init__(self, root):
         self.root = root
+        self.output = ''
         self.root.title('Blocking Command Demo')
         self.init_widgets()
             
@@ -34,7 +36,7 @@ class Application:
         self.e4 = ttk.Entry(self.root, width=40)
         self.e5 = ttk.Entry(self.root, width=40)
         
-        self.e1.grid(row=0, column=1, sticky='e')        
+        self.e1.grid(row=0, column=1, sticky='e')                
         self.e2.grid(row=1, column=1, sticky='e')
         self.e3.grid(row=2, column=1, sticky='e')
         self.e4.grid(row=3, column=1, sticky='e')
@@ -42,6 +44,8 @@ class Application:
 
         self.btn = ttk.Button(self.root, command=self.send_request, text='Send', width=8)
         self.btn.grid(column=0, row=5, sticky='w')
+        self.btn = ttk.Button(self.root, command=self.file_save, text='Export', width=8)
+        self.btn.grid(column=0, row=5, sticky='e')
                 
         self.txt = tkinter.Text(self.root, width=80, height=20)
         self.txt.grid(column=0, row=6, columnspan=2, sticky='nwes')
@@ -80,6 +84,11 @@ class Application:
         
         return formated_output
 
+    def file_save(self):
+        fout = asksaveasfile(mode = 'w', defaultextension=".txt")
+        if fout:
+            fout.write(self.output)
+            fout.close()
 
     def send_request(self):
         host = self.e1.get()
@@ -87,7 +96,6 @@ class Application:
         username = self.e3.get()
         password = self.e4.get()
         sql = self.e5.get()
-        text_output = ''
         has_error = False
 
         config = {
@@ -97,12 +105,12 @@ class Application:
                     'port': port
                 }
 
-        # config = {
-        #     'user': 'root',
-        #     'password': 'root',
-        #     'host': 'localhost',
-        #     'port': '3306'}
-        # sql = 'SELECT * FROM master_dev.topo_comp_relationships limit 1'
+        config = {
+            'user': 'root',
+            'password': 'root',
+            'host': 'localhost',
+            'port': '3306'}
+        sql = 'SELECT * FROM master_dev.topo_comp_relationships limit 1'
 
         try:
             db = mysql.connector.connect(**config)
@@ -119,12 +127,13 @@ class Application:
                 error_msg = "Error when getting data: %s" % e
             finally:
                 db.close()      
+        
         if has_error:
-            output = error_msg
+            self.output = error_msg
         else:
-            output = formated_data
+            self.output = formated_data
         self.txt.delete(0.0, tkinter.END)    
-        self.txt.insert(tkinter.INSERT, output)
+        self.txt.insert(tkinter.INSERT, self.output)
 
 
 if __name__ == '__main__':
